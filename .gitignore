@@ -7,3 +7,5 @@
 /spec/reports/
 /tmp/
 wafer-*.gem
+**/wafer-users.json
+Gemfile.lock
