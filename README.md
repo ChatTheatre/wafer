@@ -2,7 +2,7 @@
 
 If you want a simple, production-quality, fairly thin auth system for your [ChatTheatre/SkotOS game](https://github.com/ChatTheatre/SkotOS), you want [thin-auth](https://github.com/ChatTheatre/thin-auth). Thin-auth is a perfectly reasonable PHP server app. It likes being installed at a server-like path. It needs Apache and MariaDB configured in specific ways. But it does a reasonable job of a lot of things, using a fairly small amount of code. Billing? Check. Verifying for your app that billing happened? Check. Web interface for changing settings? Check. Reasonable security? Check.
 
-This is not that application.
+**This is not that application.**
 
 Wafer-thin-auth is an ultra-thin dev-mode-only server, designed to impersonate SkotOS's authentication system with a minimum of ceremony in a non-production-quality way.
 
@@ -36,6 +36,18 @@ By default Wafer will run its AuthD and CtlD on ports 2070 and 2071, equivalent 
 # root/usr/System/data/userdb
 userdb-hostname 127.0.0.1
 userdb-portbase 2000
+~~~
+
+If you'd like to change Wafer's settings - what ports it opens, and where it looks for your SkotOS server (see UserDB-Authctl below,) you can pass a settings file on the command line:
+
+~~~
+wafer -s my_settings.json
+~~~
+
+You can also create a new settings file with defaults:
+
+~~~
+wafer --default-settings > new_settings_file.json
 ~~~
 
 ### UserDB-Authctl
