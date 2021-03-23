@@ -24,11 +24,15 @@ if OPTS[:default_settings]
   exit
 end
 
-ENV["WAFER_USER_REPO_FILE"] = OPTS[:repo_file]
+puts "Try to instantiate Wafer server - verifying that settings are legal..."
+repo = JSONRepo.new OPTS[:repo_file]
+settings = {}
+settings = JSON.load File.read(OPTS[:settings_file]) if OPTS[:settings_file]
+wafer_server = Wafer::Server.new(repo: repo, settings: settings)
+puts "No problems found."
 
 # This won't return. It will run the server until interrupted.
-system ["rackup", "-p", port_num],
-  env: {
+system({
     "WAFER_USER_REPO_FILE" => OPTS[:repo_file],
     "WAFER_SETTINGS_FILE" => OPTS[:settings_file],
-  }
+  }, "rackup", "-p", wafer_server.settings["http"]["port"].to_s)
