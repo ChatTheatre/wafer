@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby -w
+
+require "wafer"
+require "wafer/version"
+
+require "json"
+
+require "optimist"
+
+OPTS = Optimist::options do
+    version "Wafer version #{Wafer::VERSION}"
+    banner <<BANNER
+Wafer runs SkotOS authentication servers for developing your ChatTheatre/SkotOS app.
+
+Available options:
+BANNER
+    opt :default_settings, "Dump default settings as JSON to console and exit"
+    opt :settings_file, "Reading settings from JSON settings file", type: String, short: "-s"
+    opt :repo_file, "JSON file containing user info", :default => "wafer-users.json"
+end
+
+if OPTS[:default_settings]
+  puts JSON.pretty_generate(Wafer::DEFAULT_SETTINGS)
+  exit
+end
+
+ENV["WAFER_USER_REPO_FILE"] = OPTS[:repo_file]
+
+# This won't return. It will run the server until interrupted.
+system ["rackup", "-p", port_num],
+  env: {
+    "WAFER_USER_REPO_FILE" => OPTS[:repo_file],
+    "WAFER_SETTINGS_FILE" => OPTS[:settings_file],
+  }
