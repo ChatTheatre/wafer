@@ -9,15 +9,18 @@ module Wafer
   DEFAULT_SETTINGS = {
       "http" => {
         "port" => 2072,
-      },
+      }.freeze,
       "authServer" => {
-          "serverIP" => "0.0.0.0",
-          "serverAuthPort" => 2070,
-          "serverCtlPort" => 2071,
-          "selectTimeout" => 1.0,
-      }
-
-  }
+        "serverIP" => "0.0.0.0",
+        "serverAuthPort" => 2070,
+        "serverCtlPort" => 2071,
+        "selectTimeout" => 5.0,
+      }.freeze,
+      "dgd" => {
+        "portbase" => 10_000,
+        "serverIP" => "127.0.0.1",
+      }.freeze,
+  }.freeze
 
   class Server
     attr_reader :repo
@@ -26,10 +29,8 @@ module Wafer
     def initialize(repo:, settings: {})
       @repo = repo
 
-      @settings = {
-        "http" => DEFAULT_SETTINGS["http"].dup,
-        "authServer" => DEFAULT_SETTINGS["authServer"].dup,
-      }
+      # Make a copy of default settings to allow modification
+      @settings = copy_of_default_settings
       @settings.merge! settings
 
       @read_sockets = []
@@ -38,30 +39,53 @@ module Wafer
       @seq_numbers = {}
     end
 
+    def copy_of_default_settings
+      Hash[DEFAULT_SETTINGS.map { |key, value| [key, value.dup] }]
+    end
+
     def log(message)
       pre = "[#{Time.now}] "
       puts pre + message
     end
 
-    def conn_connect(parent_socket, conn_type)
-      STDERR.puts "Connected! Socket type #{conn_type.inspect} on parent socket"
+    def conn_connect_incoming(parent_socket, conn_type)
+      STDERR.puts "Connecting socket type #{conn_type.inspect} on parent socket"
       client = parent_socket.accept
       @socket_types[client] = conn_type
       @read_sockets.push(client)
       @err_sockets.push(client)
+
       return client
+    end
+
+    def conn_connect_outgoing(conn_type)
+      port = conn_type == :auth ? 70 : 71
+      sock = TCPSocket.open @settings["dgd"]["serverIP"], @settings["dgd"]["portbase"] + port
+      @socket_types[sock] = conn_type == :auth ? :auth_outgoing : :ctl_outgoing
+      @read_sockets.push sock
+      @err_sockets.push sock
+
+      return sock
     end
 
     def conn_disconnect(conn)
       @read_sockets -= [ conn ]
       @err_sockets -= [ conn ]
+      socket_type = @socket_types[conn]
       @socket_types.delete(conn)
       @seq_numbers.delete(conn)
       begin
-        log("Closing connection of type #{@socket_types[conn].inspect}...")
-        errant_conn.close
+        log("Closing connection of type #{socket_type.inspect}...")
+        conn.close
       rescue
-        log("Closing connection of type #{@socket_types[conn].inspect}... (But got an error, failing - this is common.)")
+        log("Closing connection of type #{socket_type.inspect}... (But got an error, failing - this is common.)")
+      end
+
+      STDERR.puts "Reconnecting outgoing connection of type #{socket_type.inspect}..." if [:auth_outgoing, :ctl_outgoing].include?(socket_type)
+      if socket_type == :auth_outgoing
+        conn_connect_outgoing(:auth)
+      elsif socket_type == :ctl_outgoing
+        conn_connect_outgoing(:ctl)
       end
     end
 
@@ -76,6 +100,8 @@ module Wafer
     end
 
     def event_loop
+      puts "Settings:"
+      puts JSON.pretty_generate(@settings)
       ctl_server = TCPServer.new @settings["authServer"]["serverIP"], @settings["authServer"]["serverCtlPort"]
       auth_server = TCPServer.new @settings["authServer"]["serverIP"], @settings["authServer"]["serverAuthPort"]
 
@@ -86,10 +112,12 @@ module Wafer
         readable ||= []
         errorable ||= []
 
-        # Accept new connections if parent sockets are readable
-        conn_connect(ctl_server, :ctl) if readable.include?(ctl_server)
-        conn_connect(auth_server, :auth) if readable.include?(auth_server)
-        readable -= [ctl_server, auth_server]
+        puts "Selected... R: #{readable.size} E: #{errorable.size}"
+
+        # Accept new connections on incoming ctl_server and auth_server sockets
+        conn_connect_incoming(ctl_server, :ctl) if readable.include?(ctl_server)
+        conn_connect_incoming(auth_server, :auth) if readable.include?(auth_server)
+        readable -= [ctl_server, auth_server] # But don't literally try a socket read on them
 
         # Close connections on error
         errorable.each { |errant_conn| conn_disconnect(errant_conn) }
