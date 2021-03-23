@@ -11,9 +11,6 @@ module Wafer
         "port" => 2072,
       }.freeze,
       "authServer" => {
-        "serverIP" => "0.0.0.0",
-        "serverAuthPort" => 2070,
-        "serverCtlPort" => 2071,
         "selectTimeout" => 5.0,
       }.freeze,
       "dgd" => {
@@ -48,27 +45,17 @@ module Wafer
       puts pre + message
     end
 
-    def conn_connect_incoming(parent_socket, conn_type)
-      STDERR.puts "Connecting socket type #{conn_type.inspect} on parent socket"
-      client = parent_socket.accept
-      @socket_types[client] = conn_type
-      @read_sockets.push(client)
-      @err_sockets.push(client)
-
-      return client
-    end
-
-    def conn_connect_outgoing(conn_type)
-      port = conn_type == :auth ? 70 : 71
-      sock = TCPSocket.open @settings["dgd"]["serverIP"], @settings["dgd"]["portbase"] + port
-      @socket_types[sock] = conn_type == :auth ? :auth_outgoing : :ctl_outgoing
+    def conn_connect(conn_type)
+      port = @settings["dgd"]["portbase"] + (conn_type == :auth ? 70 : 71)
+      sock = TCPSocket.open @settings["dgd"]["serverIP"], port
+      @socket_types[sock] = conn_type
       @read_sockets.push sock
       @err_sockets.push sock
 
       return sock
     end
 
-    def conn_disconnect(conn)
+    def conn_reconnect(conn)
       @read_sockets -= [ conn ]
       @err_sockets -= [ conn ]
       socket_type = @socket_types[conn]
@@ -78,15 +65,12 @@ module Wafer
         log("Closing connection of type #{socket_type.inspect}...")
         conn.close
       rescue
+        STDERR.puts $!.inspect
         log("Closing connection of type #{socket_type.inspect}... (But got an error, failing - this is common.)")
       end
 
-      STDERR.puts "Reconnecting outgoing connection of type #{socket_type.inspect}..." if [:auth_outgoing, :ctl_outgoing].include?(socket_type)
-      if socket_type == :auth_outgoing
-        conn_connect_outgoing(:auth)
-      elsif socket_type == :ctl_outgoing
-        conn_connect_outgoing(:ctl)
-      end
+      STDERR.puts "Reconnecting outgoing connection of type #{socket_type.inspect}..."
+      conn_connect(socket_type)
     end
 
     def send_error(conn, message)
@@ -96,37 +80,36 @@ module Wafer
     end
 
     def send_ok(conn, message)
-      conn.write "#{@seq_numbers[conn]} OK #{message}\n"
+      ok_message = "#{@seq_numbers[conn]} OK #{message}\n"
+      STDERR.puts "Sending OK message: #{ok_message.inspect}"
+      conn.write ok_message
     end
 
     def event_loop
       puts "Settings:"
       puts JSON.pretty_generate(@settings)
-      ctl_server = TCPServer.new @settings["authServer"]["serverIP"], @settings["authServer"]["serverCtlPort"]
-      auth_server = TCPServer.new @settings["authServer"]["serverIP"], @settings["authServer"]["serverAuthPort"]
+
+      conn_connect(:auth)
+      conn_connect(:ctl)
 
       loop do
         sleep 0.1
-        readable, _, errorable, = IO.select (@read_sockets + [ctl_server, auth_server]), [], @err_sockets + [], @settings["authServer"]["selectTimeout"]
+        readable, _, errorable, = IO.select @read_sockets, [], @err_sockets, @settings["authServer"]["selectTimeout"]
 
         readable ||= []
         errorable ||= []
 
-        puts "Selected... R: #{readable.size} E: #{errorable.size}"
-
-        # Accept new connections on incoming ctl_server and auth_server sockets
-        conn_connect_incoming(ctl_server, :ctl) if readable.include?(ctl_server)
-        conn_connect_incoming(auth_server, :auth) if readable.include?(auth_server)
-        readable -= [ctl_server, auth_server] # But don't literally try a socket read on them
+        puts "Selected... R: #{readable.size} / #{@read_sockets.size} E: #{errorable.size} / #{@err_sockets.size}"
 
         # Close connections on error
-        errorable.each { |errant_conn| conn_disconnect(errant_conn) }
+        errorable.each { |errant_conn| conn_reconnect(errant_conn) }
 
         (readable - errorable).each do |conn|
-          data = conn.read
+          STDERR.puts "Preparing for read..."
+          data = conn.recv_nonblock(2048)
           if !data || data == ""
-            STDERR.puts "Done, disconnecting!"
-            conn_disconnect(conn)
+            STDERR.puts "No data - need to reconnect?"
+            #conn_reconnect(conn)
             next
           end
           STDERR.puts "Successful read: #{data.inspect}"

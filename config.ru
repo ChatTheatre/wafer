@@ -19,7 +19,8 @@ BACKGROUND_THREAD = Thread.new do
     puts "Entered the thread..."
     wafer.event_loop
   rescue Exception
-        puts "Got exception in thread! Dying! #{$!.inspect}"
+        puts "Got exception in thread! Dying! #{$!.message}"
+        puts $!.backtrace.join("\n")
         raise
   end
 end
