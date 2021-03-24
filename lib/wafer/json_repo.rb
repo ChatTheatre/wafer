@@ -59,6 +59,10 @@ class JSONRepo
         @contents = JSON.load(File.read json_filename)
     end
 
+    def user_names
+        @contents["users"].map { |u| u["name"] }
+    end
+
     def uid_by_name(name)
         user = user_by_name(name)
         user && user["id"]

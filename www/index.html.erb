@@ -1,16 +1,47 @@
 <html>
 <head>
   <script>
+
+    //document.querySelector(".button").addEventListener("click", (e) => { /* ... */ });
+
+    // Define a convenience method and use it
+    var ready = (callback) => {
+      if (document.readyState != "loading") callback();
+      else document.addEventListener("DOMContentLoaded", callback);
+    }
+
+    ready(() => {
+      /* After DOM has fully loaded... */
+      document.querySelector("#user-select").addEventListener("change", (e) => {
+        let user = document.querySelector("#user-select").value;
+        let playUrl = "http://localhost:<%= play_port %>/gables/gables.htm?charName=" + user;
+        document.querySelector("#play-url").href = playUrl;
+        document.cookie = "user=" + user + ";path=/";
+        console.log("Setting user to be " + user + ".");
+        console.log("Setting Play URL to be " + playUrl + ".");
+      });
+    });
   </script>
 </head>
 <body>
 
+<%
+  first_user = (users - ["admin"]).first  # Set cookie for first non-admin user
+  vars["user"] = first_user
+%>
+
 <h1>Wafer DGD Login</h1>
 
 <ul>
-  <li><a href="http://localhost:<%= play_port %>/gables/gables.htm">Play</a></li>
+  <li><a id="play-url" href="http://localhost:<%= play_port %>/gables/gables.htm?charName=<%= first_user %>">Play</a></li>
   <li><a href="http://localhost:<%= play_port %>/gables/TreeOfWOE.html">Tree of WOE</a></li>
 </ul>
+
+<select id="user-select">
+  <% users.each do |user| %>
+    <option value="<%= user %>"><%= user %></option>
+  <% end %>
+</select>
 
 </body>
 </html>

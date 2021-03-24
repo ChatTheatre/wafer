@@ -38,6 +38,7 @@ run (proc do |env|
     eruby = Erubis::Eruby.new(erb_text)
     RET_VARS.clear
     html_text = eruby.result env: env, vars: RET_VARS,
+      users: repo.user_names,
       play_port: wafer.settings["dgd"]["portbase"] + 80
 
     # Should be possible to set the user and password cookies from Erb.
