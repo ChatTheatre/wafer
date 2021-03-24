@@ -192,7 +192,7 @@ class JSONRepo
         STDERR.puts "Checking md5 hash: #{hash.inspect}"
 
         keycode = user["keycode"]["keycode"]
-        real_hash = Digest::MD5(user["name"] + keycode + "NONE")
+        real_hash = Digest::MD5.hexdigest(user["name"] + keycode + "NONE")
 
         STDERR.puts "  Real hash: #{real_hash.inspect}"
 
