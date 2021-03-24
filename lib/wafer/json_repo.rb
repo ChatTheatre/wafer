@@ -123,7 +123,7 @@ class JSONRepo
     private
 
     def new_random_keycode
-        random(1 << 27)
+        rand(1 << 27)
     end
 
     public
@@ -165,9 +165,8 @@ class JSONRepo
 
     def is_keycode_ok(uid, code)
         return [false, "BAD KEYCODE"] unless code
-        return [false, "BAD KEYCODE"] unless code == "17" || code == "LOCAL"
 
-        # Keycode handling here is insultingly trivial and entirely insecure.
+        # Keycode handling here is insultingly trivial and intentionally insecure.
 
         return [true, ""]
     end

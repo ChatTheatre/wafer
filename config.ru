@@ -41,7 +41,7 @@ run (proc do |env|
       play_port: wafer.settings["dgd"]["portbase"] + 80
 
     # Should be possible to set the user and password cookies from Erb.
-    resp = Rack::Response html_text, 200, { 'Content' => 'text/html' }
+    resp = Rack::Response.new html_text, 200, { 'Content' => 'text/html' }
     if RET_VARS["user"]
         resp.set_cookie "user", { value: RET_VARS["user"], path: "/", expires: Time.now+30*24*60*60 }
         # "pass" is used for the keycode, not an actual password
