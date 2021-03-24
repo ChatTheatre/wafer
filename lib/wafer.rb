@@ -34,6 +34,7 @@ module Wafer
       @err_sockets = []
       @socket_types = {}
       @seq_numbers = {}
+      @socket_buffer = {}
     end
 
     def copy_of_default_settings
@@ -51,6 +52,7 @@ module Wafer
       @socket_types[sock] = conn_type
       @read_sockets.push sock
       @err_sockets.push sock
+      @socket_buffer[sock] = ""
 
       return sock
     end
@@ -61,6 +63,7 @@ module Wafer
       socket_type = @socket_types[conn]
       @socket_types.delete(conn)
       @seq_numbers.delete(conn)
+      @socket_buffer.delete(conn)
       begin
         log("Closing connection of type #{socket_type.inspect}...")
         conn.close
@@ -113,19 +116,26 @@ module Wafer
             next
           end
           STDERR.puts "Successful read: #{data.inspect}"
-          parts = data.chomp.strip.split(" ").map { |part| CGI::unescape(part) }
-          next if parts == []  # No-op
+          @socket_buffer[conn] += data
 
-          STDERR.puts "Successful parse: #{parts.inspect}"
+          while @socket_buffer[conn]["\r\n"]
+            line, remainder = @socket_buffer[conn].split("\r\n", 2)
+            @socket_buffer[conn] = remainder
 
-          case @socket_types[conn]
-          when :ctl
-            ctl_respond(conn, parts)
-          when :auth
-            auth_respond(conn, parts)
-          else
-            log("Wrong socket type #{@socket_types[conn].inspect} for connection!")
-            conn_disconnect(conn)
+            parts = line.chomp.strip.split(" ").map { |part| CGI::unescape(part) }
+            next if parts == []  # No-op
+
+            STDERR.puts "Successful parse: #{parts.inspect}"
+
+            case @socket_types[conn]
+            when :ctl
+              ctl_respond(conn, parts)
+            when :auth
+              auth_respond(conn, parts)
+            else
+              log("Wrong socket type #{@socket_types[conn].inspect} for connection!")
+              conn_disconnect(conn)
+            end
           end
         end
       end

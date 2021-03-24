@@ -16,6 +16,30 @@ class JSONRepo
                 "next_stamp" => 0,
                 "account_credit" => 0.0,
                 "account_type" => "staff",  # regular, trial, free, developer, staff
+                "account_status" => "PAID",
+
+                "flags" => ["terms-of-service"],  # no-email, premium, deleted, terms-of-service, banned
+
+                "access" => [ "gables" ],  # What game names the user has access to
+
+                "keycode" => {
+                    "keycode" => "17",
+                    "keycode_stamp" => Time.now,
+                },
+            },
+            {
+                "id" => 1,
+                "name" => "bobo",
+                "email" => "bobo@example.com",
+                "creation_time" => Time.now,
+                "password" => "ABCDEFG",
+                "pay_day" => 0,
+                "next_month" => 0,
+                "next_year" => 0,
+                "next_stamp" => 0,
+                "account_credit" => 0.0,
+                "account_type" => "staff",  # regular, trial, free, developer, staff
+                "account_status" => "PAID",
 
                 "flags" => ["terms-of-service"],  # no-email, premium, deleted, terms-of-service, banned
 
