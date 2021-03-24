@@ -81,6 +81,31 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/wafer. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/wafer/blob/master/CODE_OF_CONDUCT.md).
 
 
+## Wire Protocol
+
+Wafer exists primarily to speak SkotOS AuthD and CtlD wire protocol to an outside-world server, just as thin-auth does. You're often best advised to look at wild-captured examples of that wire protocol.
+
+~~~
+AUTHD: sending [keycodeauth 2726 noah 1036249917]
+receive_message: 2726 OK PAID 0 (developer;terms-of-service gables)
+AUTHD: sending [keycodeauth 2727 noah 1036249917]
+receive_message: 2727 OK PAID 0 (developer;terms-of-service gables)
+AUTHD: sending [keycodeauth 2728 noah 1036249917]
+receive_message: 2728 OK PAID 0 (developer;terms-of-service gables)
+AUTHD: sending [md5login 2729 noah 7355169ed8cf08d5c46bf4cd8e4c02f9]
+receive_message: 2729 OK 1036249917
+AUTHD: sending [keycodeauth 2730 noah 1036249917]
+receive_message: 2730 OK PAID 0 (developer;terms-of-service gables)
+~~~
+
+The easiest way, as a rule, to capture correct AuthD/CtlD exchanges is to log into your SkotOS DGD server on the telnet port and execute the following code snippet:
+
+~~~
+code "/usr/System/sys/syslogd"->set_debug_level("/usr/UserAPI/sys/authd", 2)
+~~~
+
+This will log all AuthD exchanges, and so it's probably too verbose to be kept on consistently - right now, any web request served on port 10080 will check with AuthD, which means a lot of exchanges.
+
 ## License
 
 The gem is available as open source under the terms of the GNU Affero General Public License (AGPL.)
