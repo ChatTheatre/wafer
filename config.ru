@@ -26,6 +26,7 @@ BACKGROUND_THREAD = Thread.new do
 end
 
 RACK_404 = [404, {}, ["File not found!"]]
+RET_VARS = {}
 
 run (proc do |env|
   path = env['PATH_INFO']
@@ -35,10 +36,18 @@ run (proc do |env|
   if File.exist?(template_path)
     erb_text = File.read(template_path)
     eruby = Erubis::Eruby.new(erb_text)
-    html_text = eruby.result env: env,
+    RET_VARS.clear
+    html_text = eruby.result env: env, vars: RET_VARS,
       play_port: wafer.settings["dgd"]["portbase"] + 80
 
-    [200, { 'Content' => 'text/html' }, [html_text] ]
+    # Should be possible to set the user and password cookies from Erb.
+    resp = Rack::Response html_text, 200, { 'Content' => 'text/html' }
+    if RET_VARS["user"]
+        resp.set_cookie "user", { value: RET_VARS["user"], path: "/", expires: Time.now+30*24*60*60 }
+        # "pass" is used for the keycode, not an actual password
+        resp.set_cookie "pass", { value: "17", path: "/", expires: Time.now+30*24*60*60 }
+    end
+    resp.finish
   else
     [404, {}, [ "File not found: #{template_path}" ]]
   end
