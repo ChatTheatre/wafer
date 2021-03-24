@@ -116,6 +116,7 @@ class Wafer::Server
             code = message[0] unless code
 
             allowed, err = @repo.is_keycode_ok(uid, code)
+            STDERR.puts "keycodeauth(#{uid.inspect}, #{code.inspect}) = [#{allowed.inspect}, #{err.inspect}]"
             return send_error(conn, err) unless allowed
 
             return send_error(conn, "TOS") unless @repo.user_has_tos?(uid)
@@ -155,7 +156,7 @@ class Wafer::Server
     def send_auth_status(conn, uid)
         user_type = @repo.user_account_type(uid)
         user_status = @repo.user_account_status(uid)
-        user_string = "(#{user_type}, #{user_status})"
+        user_string = "(#{user_type};#{user_status})"
 
         if @repo.user_is_paid?(uid)
             if user_type == "trial"

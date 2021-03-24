@@ -112,6 +112,7 @@ module Wafer
           data = conn.recv_nonblock(2048)
           if !data || data == ""
             STDERR.puts "No data - need to reconnect?"
+            sleep 0.5
             #conn_reconnect(conn)
             next
           end
