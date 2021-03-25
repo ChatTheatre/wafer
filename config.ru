@@ -19,13 +19,12 @@ BACKGROUND_THREAD = Thread.new do
     puts "Entered the thread..."
     wafer.event_loop
   rescue Exception
-        puts "Got exception in thread! Dying! #{$!.message}"
-        puts $!.backtrace.join("\n")
-        raise
+    puts "Got exception in thread! Dying! #{$!.message}"
+    puts $!.backtrace.join("\n")
+    exit -1 # This should shut down the web server, too.
   end
 end
 
-RACK_404 = [404, {}, ["File not found!"]]
 RET_VARS = {}
 
 run (proc do |env|

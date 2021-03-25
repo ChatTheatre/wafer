@@ -102,8 +102,6 @@ module Wafer
         readable ||= []
         errorable ||= []
 
-        puts "Selected... R: #{readable.size} / #{@read_sockets.size} E: #{errorable.size} / #{@err_sockets.size}"
-
         # Close connections on error
         errorable.each { |errant_conn| conn_reconnect(errant_conn) }
 
@@ -128,14 +126,20 @@ module Wafer
 
             STDERR.puts "Successful parse: #{parts.inspect}"
 
-            case @socket_types[conn]
-            when :ctl
-              ctl_respond(conn, parts)
-            when :auth
-              auth_respond(conn, parts)
-            else
-              log("Wrong socket type #{@socket_types[conn].inspect} for connection!")
-              conn_disconnect(conn)
+            begin
+              case @socket_types[conn]
+              when :ctl
+                ctl_respond(conn, parts)
+              when :auth
+                auth_respond(conn, parts)
+              else
+                log("Wrong socket type #{@socket_types[conn].inspect} for connection!")
+                conn_disconnect(conn)
+              end
+            rescue # Implied: rescue RuntimeError
+              puts "Got exception handling message! #{$!.message}"
+              puts $!.backtrace.join("\n")
+              next
             end
           end
         end
