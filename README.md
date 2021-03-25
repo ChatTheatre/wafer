@@ -1,16 +1,16 @@
 # Wafer
 
-If you want a simple, production-quality, fairly thin auth system for your [ChatTheatre/SkotOS game](https://github.com/ChatTheatre/SkotOS), you want [thin-auth](https://github.com/ChatTheatre/thin-auth). Thin-auth is a perfectly reasonable PHP server app. It likes being installed at a server-like path. It needs Apache and MariaDB configured in specific ways. But it does a reasonable job of a lot of things, using a fairly small amount of code. Billing? Check. Verifying for your app that billing happened? Check. Web interface for changing settings? Check. Reasonable security? Check.
+If you want a simple, production-quality, fairly thin auth system for your [ChatTheatre/SkotOS game](https://github.com/ChatTheatre/SkotOS), you want [thin-auth](https://github.com/ChatTheatre/thin-auth). Thin-auth is a perfectly reasonable PHP app that tracks accounts and passwords and provides access to support staff. It likes being installed at a server-like path. It needs Apache and MariaDB configured in specific ways. But it does a reasonable job of a lot of things, using a fairly small amount of code. Billing? Check. Verifying for your app that billing happened? Check. Web interface for changing settings? Check. Reasonable security? Check. It's not the easiest to configure [but there are some examples out there of how to do it.](https://github.com/ChatTheatre/SkotOS/blob/master/deploy_scripts/stackscript/linode_stackscript.sh)
 
-**This is not that application.**
+**Wafer is not that application.**
 
-Wafer-thin-auth is an ultra-thin dev-mode-only server, designed to impersonate SkotOS's authentication system with a minimum of ceremony in a non-production-quality way.
+Wafer (short for "Wafer-thin-auth") is an ultra-thin dev-mode-only server, designed to impersonate SkotOS's authentication system with a minimum of ceremony in a ***NOT-OKAY-FOR-PRODUCTION*** way.
 
-For now you can run it in dev and it will cheerfully believe that all your users are paid up, and always right about their passwords. It is an eternal and negligent optimist. You should never, never use it production &mdash; even once we fix that problem. There are large swaths of important functionality that it doesn't even begin to attempt. Thin-auth has good password checking, backup scripts, support for staff to manage accounts and many other things that would be worse than useless for wafer-thin-auth. Want something reasonable for production? No problem - use thin-auth.
+You can run it in dev and it will cheerfully believe that all your users are paid up, and always right about their passwords. It is an eternal and negligent optimist. You should never, never use it production &mdash; even once we fix that problem. There are large swaths of important functionality that it doesn't even begin to attempt. Thin-auth has good password checking, backup scripts, support for staff to manage accounts and many other things that would be worse than useless for Wafer. Want something reasonable for production? No problem - use thin-auth.
 
-Also, its code is far smaller and its dependencies far fewer than anything that would actually work for a real production app. 'Good' negligent optimism can be had for cheap!
+But Wafer's code is far smaller and its dependencies far fewer than anything that would actually work for a real production app. 'Good' negligent optimism can be had for cheap!
 
-But wafer-thin-auth will replace thin-auth, including its web and server components, and even the userdb-authctl shim to make an outgoing connection to the DGD server. The hope is that you can run a much less elaborate setup in development, while we get rid of an un-securable development mode of the SkotOS server.
+But wafer-thin-auth will impersonate thin-auth ***in development only***. The default SkotOS Mac setup scripts set it up for that.
 
 ## Installation
 
@@ -28,15 +28,11 @@ Or install it yourself as:
 
     $ gem install wafer
 
+You can also "git clone" it and run it from there. That's what SkotOS does.
+
 ## Usage
 
-By default Wafer will run its AuthD and CtlD on ports 2070 and 2071, equivalent to a SkotOS portbase of 2000. You can set up your SkotOS server's UserDB file for that easily:
-
-~~~
-# root/usr/System/data/userdb
-userdb-hostname 127.0.0.1
-userdb-portbase 2000
-~~~
+By default Wafer will connect to AuthD and CtlD on ports 10070 and 10071, equivalent to a SkotOS portbase of 10000.
 
 If you'd like to change Wafer's settings - what ports it opens, and where it looks for your SkotOS server (see UserDB-Authctl below,) you can pass a settings file on the command line:
 
@@ -50,19 +46,19 @@ You can also create a new settings file with defaults:
 wafer --default-settings > new_settings_file.json
 ~~~
 
+Wafer will create a JSON file with users in it in the current directory called wafer-users.json. You can add users to it if you want more than the default two (admin and one more.) If you delete it, Wafer will write out a new one with the default two users. Wafer won't normally re-read it during a run, so you should only modify it manually while Wafer isn't running.
+
 ### UserDB-Authctl
 
-For weird historical reasons, neither DGD nor its AuthD/CtlD want to make an outgoing network connection. Userdb-authctl is a shim between them to fix that. Wafer handles it by making outgoing network connections.
+For weird historical reasons, neither DGD nor its AuthD/CtlD want to make an outgoing network connection. Userdb-authctl is a shim between them to fix that. Wafer handles it by making outgoing network connections. That's a bit like if you were running both thin-auth and userdb-authctl (which is what SkotOS does in production.)
 
-If you're not already running the userdb-authctl shim server, you'll probably want Wafer to do that for you -- or you can run userdb-authctl, but then it's one more piece to keep up and running.
-
-In production you'll need to run userdb-authctl -- SkotOS StackScripts set this up by default. That's because you should never, never run Wafer in production. It's ***only*** for development.
+In production you'll need to run userdb-authctl -- SkotOS's Linode StackScripts set this up by default. You should never, never run Wafer in production. It's ***only*** for development.
 
 ## Development
 
-Want to do development on Wafer? It can certainly use the help!
+Want to do development on the Wafer server itself? It can certainly use the help!
 
-Your go-to incantation for running the command line program:
+Your go-to incantation for running the command line program from a cloned repo:
 
 ~~~
 ruby -Ilib ./exe/wafer
@@ -104,7 +100,7 @@ The easiest way, as a rule, to capture correct AuthD/CtlD exchanges is to log in
 code "/usr/System/sys/syslogd"->set_debug_level("/usr/UserAPI/sys/authd", 2)
 ~~~
 
-This will log all AuthD exchanges, and so it's probably too verbose to be kept on consistently - right now, any web request served on port 10080 will check with AuthD, which means a lot of exchanges.
+This will log all AuthD exchanges, and so it's probably too verbose to be kept on consistently - right now any web request served on port 10080 will check with AuthD, which means a lot of keycodeauth API calls.
 
 ## License
 
@@ -112,4 +108,4 @@ The gem is available as open source under the terms of the GNU Affero General Pu
 
 ## Code of Conduct
 
-Everyone interacting in the Wafer project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/wafer/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the Wafer project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/noahgibbs/wafer/blob/master/CODE_OF_CONDUCT.md).
