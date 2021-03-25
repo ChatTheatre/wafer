@@ -39,7 +39,7 @@
 
 <select id="user-select">
   <% users.each do |user| %>
-    <option value="<%= user %>"><%= user %></option>
+    <option value="<%= user %>" <%= user == first_user ? "selected" : "" %>><%= user %></option>
   <% end %>
 </select>
 
