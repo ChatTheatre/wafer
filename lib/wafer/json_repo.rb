@@ -28,7 +28,29 @@ class JSONRepo
                 },
             },
             {
-                "id" => 1,
+                "id" => 101,
+                "name" => "default",
+                "email" => "default_if_no_user_given@example.com",
+                "creation_time" => Time.now,
+                "password" => "ABCDEFG",
+                "pay_day" => 0,
+                "next_month" => 0,
+                "next_year" => 0,
+                "next_stamp" => 0,
+                "account_credit" => 0.0,
+                "account_type" => "staff",  # regular, trial, free, developer, staff
+
+                "flags" => ["terms-of-service"],  # no-email, premium, deleted, terms-of-service, banned
+
+                "access" => [ "gables" ],  # What game names the user has access to
+
+                "keycode" => {
+                    "keycode" => "17",
+                    "keycode_stamp" => Time.now,
+                },
+            },
+            {
+                "id" => 2,
                 "name" => "bobo",
                 "email" => "bobo@example.com",
                 "creation_time" => Time.now,
@@ -68,8 +90,11 @@ class JSONRepo
         user && user["id"]
     end
 
+    # Return the user by name, or the default user if none found
     def user_by_name(name)
-        user_by_field("name", name)
+        user = user_by_field("name", name)
+        return user if user
+        user_by_field("name", "default")
     end
 
     def user_by_id(id)
