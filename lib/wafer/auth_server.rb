@@ -132,7 +132,7 @@ class Wafer::Server
             return send_auth_status(conn, uid)
 
         when "passlogin"
-            return send_auth_status(conn, @repo.user_keycode(uid))
+            return send_auth_status(conn, uid)
 
         when "passwordauth"
             return send_auth_status(conn, uid)
