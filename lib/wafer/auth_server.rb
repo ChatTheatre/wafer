@@ -3,7 +3,7 @@ class Wafer::Server
     NO_USER_VERIFY_CMDS = ["emailused", "emaillookup"]
     KEYCODE_VERIFY_CMDS = ["checkaccess", "convertaccount", "getping", "getprop", "pinguser"]
     HASH_VERIFY_CMDS = ["md5login", "md5auth"]
-    PASSWORD_VERIFY_CMDS = ["passwordlogin", "passwordauth"]
+    PASSWORD_VERIFY_CMDS = ["passlogin", "passwordauth"]
 
     def auth_respond(conn, first_message)
         if first_message[0][0] == ":"
@@ -130,7 +130,7 @@ class Wafer::Server
         when "md5auth"
             return send_auth_status(conn, uid)
 
-        when "passwordlogin"
+        when "passlogin"
             return send_ok(conn, @repo.user_keycode(uid))
 
         when "passwordauth"
