@@ -15,10 +15,10 @@
       document.querySelector("#user-select").addEventListener("change", (e) => {
         let user = document.querySelector("#user-select").value;
         let playUrl = "http://localhost:<%= play_port %>/gables/gables.htm?charName=" + user;
-        document.querySelector("#play-url").href = playUrl;
+        //document.querySelector("#play-url").href = playUrl;
         document.cookie = "user=" + user + ";path=/";
         console.log("Setting user to be " + user + ".");
-        console.log("Setting Play URL to be " + playUrl + ".");
+        //console.log("Setting Play URL to be " + playUrl + ".");
       });
     });
   </script>
