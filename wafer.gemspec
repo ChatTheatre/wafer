@@ -29,4 +29,5 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "erubis"
   spec.add_runtime_dependency "rack"
   spec.add_runtime_dependency "json"
+  spec.add_runtime_dependency "webrick"
 end
