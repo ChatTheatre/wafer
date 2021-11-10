@@ -100,7 +100,7 @@ The easiest way, as a rule, to capture correct AuthD/CtlD exchanges is to log in
 code "/usr/System/sys/syslogd"->set_debug_level("/usr/UserAPI/sys/authd", 2)
 ~~~
 
-This will log all AuthD exchanges, and so it's probably too verbose to be kept on consistently - right now any web request served on port 10080 will check with AuthD, which means a lot of keycodeauth API calls.
+This will log all AuthD exchanges, and so it's probably too verbose to be kept on consistently - right now any web request served on DGD's HTTP port (11080) will check with AuthD, which means a lot of keycodeauth API calls.
 
 ## License
 
